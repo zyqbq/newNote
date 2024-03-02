@@ -1,0 +1,173 @@
+### 纹理对象texture
+
+TextureLoader
+
+材质的color和map会混合
+
+```js
+//纹理贴图加载器TextureLoader
+const texLoader = new THREE.TextureLoader();
+// .load()方法加载图像，返回一个纹理对象Texture
+const texture = texLoader.load('./earth.jpg');
+const material = new THREE.MeshLambertMaterial({
+    // color: 0x00ffff,
+    // 设置纹理贴图：Texture对象作为材质map属性的属性值
+    map: texture,//map表示材质的颜色贴图属性
+});
+或者
+material.map=texture
+```
+
+长方体是每个面都贴一个贴图 
+
+纹理贴图宽高最好是2的次方
+
+### uv坐标系
+
+几何体的属性
+
+左下角（0,0） 右上角（1,1）
+
+![image-20230723201518122](../../assests/image-20230723201518122.png)
+
+### 访问uv
+
+```js
+geometry.attributes.uv
+```
+
+
+
+### 自定义uv坐标
+
+贴图左下角
+
+uv和物体的坐标对应
+
+```js
+/**纹理坐标0~1之间随意定义*/
+const uvs = new Float32Array([
+    0, 0, //图片左下角
+    0.5, 0, //图片右下角
+    0.5, 0.5, //图片右上角
+    0, 0.5, //图片左上角
+]);
+geometry.attributes.uv = new THREE.BufferAttribute(uvs, 2); //2个为一组,表示一个顶点的纹理坐标
+```
+
+### 剪裁圆形
+
+圆形的uv坐标对应也是圆形的，会对方向图片进行裁剪
+
+```js
+//CircleGeometry的顶点UV坐标是按照圆形采样纹理贴图
+const geometry = new THREE.CircleGeometry(60, 100);
+//纹理贴图加载器TextureLoader
+const texLoader = new THREE.TextureLoader();
+const texture = texLoader.load('./texture.jpg');
+const material = new THREE.MeshBasicMaterial({
+    map: texture,//map表示材质的颜色贴图属性
+    side:THREE.DoubleSide,
+});
+const mesh = new THREE.Mesh(geometry, material);
+```
+
+### 阵列uv
+
+```js
+const geometry = new THREE.PlaneGeometry(2000, 2000);
+//纹理贴图加载器TextureLoader
+const texLoader = new THREE.TextureLoader();
+// .load()方法加载图像，返回一个纹理对象Texture
+const texture = texLoader.load('./瓷砖.jpg');
+
+// 设置阵列模式
+texture.wrapS = THREE.RepeatWrapping; 横轴方向
+texture.wrapT = THREE.RepeatWrapping;纵轴方向
+// uv两个方向纹理重复数量
+texture.repeat.set(30,30);//注意选择合适的阵列数量
+
+const material = new THREE.MeshLambertMaterial({
+    // color: 0x00ffff,
+    // 设置纹理贴图：Texture对象作为材质map属性的属性值
+    map: texture,//map表示材质的颜色贴图属性
+});
+
+```
+
+### 透明背景贴图png
+
+```js
+const texture = texLoader.load('./转弯.png');
+
+const material = new THREE.MeshLambertMaterial({
+    map: texture,//map表示材质的颜色贴图属性
+    transparent:true,//开启透明，这样png贴图的透明部分不显示
+});
+```
+
+### 网格地面辅助
+
+```js
+// 添加一个辅助网格地面
+const gridHelper = new THREE.GridHelper(300, 25, 0x004444, 0x004444);
+scene.add(gridHelper);
+```
+
+### uv偏移
+
+```js
+texture.offset.x +=0.5;//纹理X方向偏移
+ texture.offset.y +=0.5;//纹理Y方向偏移
+```
+
+### uv动画
+
+```js
+// 渲染循环
+function render() {
+    texture.offset.x +=0.003;//设置纹理动画
+    renderer.render(scene, camera);
+    requestAnimationFrame(render);
+}
+render();
+```
+
+### 每一个面贴图不同
+
+mesh的dier个参数传入数组，一般是一个面对应一个uv
+
+```js
+const mesh = new THREE.Mesh( geometry, 数组 );
+```
+
+### 纹理旋转
+
+![image-20230822151905245](../../assests/image-20230822151905245.png)
+
+![image-20230822152109404](../../assests/image-20230822152109404.png)
+
+### 法线贴图
+
+漫反射材质和基础网格材质没有凹凸和法线属性
+
+图片太小也会有影响
+
+rgb对应xyz三个分量
+
+![image-20230823142630789](../../assests/image-20230823142630789.png)
+
+几何信息转换为像素信息-法线贴图，精模可以烘焙出简模
+
+低模+法线贴图=高模 减少顶点
+
+### 凹凸贴图
+
+ 有法线贴图则忽略凹凸贴图
+
+黑色凹，白色凸
+
+![image-20230823143818445](../../assests/image-20230823143818445.png)
+
+### 阴影贴图
+
